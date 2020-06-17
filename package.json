@@ -1,0 +1,26 @@
+{
+  "name": "adventure_capitalist",
+  "version": "1.0.0",
+  "description": "Replica of browser game adventure capitalist",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/awaise267/adventure_capitalist.git"
+  },
+  "keywords": [
+    "adventure",
+    "capitalist"
+  ],
+  "author": "awaise267@gmail.com",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/awaise267/adventure_capitalist/issues"
+  },
+  "homepage": "https://github.com/awaise267/adventure_capitalist#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
