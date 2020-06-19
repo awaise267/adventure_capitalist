@@ -6,10 +6,11 @@ export class BusinessType {
     static readonly LEMONADE : BusinessType = new BusinessType(1, "Lemonade Stand");
     static readonly NEWSPAPER : BusinessType = new BusinessType(2, "Newspaper Delivery");
     static readonly CAR : BusinessType = new BusinessType(3, "Car Wash");
-    static readonly DONUT : BusinessType= new BusinessType(4, "Donut Shop");
-    static readonly STUDIO : BusinessType= new BusinessType(5, "Movie Studio");
-    static readonly BANK : BusinessType= new BusinessType(6, "Bank");
-    static readonly OIL : BusinessType= new BusinessType(7, "Oil Company");
+    static readonly DONUT : BusinessType = new BusinessType(4, "Donut Shop");
+    static readonly HOCKEY : BusinessType = new BusinessType(5, "Hockey Team");
+    static readonly STUDIO : BusinessType = new BusinessType(6, "Movie Studio");
+    static readonly BANK : BusinessType = new BusinessType(7, "Bank");
+    static readonly OIL : BusinessType = new BusinessType(8, "Oil Company");
 
     public id : number;
     public name : string;
@@ -22,7 +23,8 @@ export class BusinessType {
 
 export class Business implements CashUpdateListener {
     type : BusinessType;
-    income : number;
+    baseIncome : number;
+    income : number; //current income
     milliSecondsPerRun : number;
     cost : number;
     costIncrementFactor : number;
@@ -33,9 +35,12 @@ export class Business implements CashUpdateListener {
     managed : boolean;
     startedAt : number;
 
-    public constructor(type : BusinessType, baseIncome : number, secondsPerRun : number, baseCost : number, costIncrementFactor : number) {        
+    static instances : object = {};
+
+    public constructor(type : BusinessType, secondsPerRun : number, baseCost : number, costIncrementFactor : number) {
         this.type = type;
-        this.income = baseIncome;
+        this.baseIncome = baseCost;
+        this.income = baseCost;
         this.milliSecondsPerRun = secondsPerRun * 1000;
         this.cost = baseCost;
         this.costIncrementFactor = costIncrementFactor;
@@ -44,15 +49,31 @@ export class Business implements CashUpdateListener {
         this.running = false;
         this.upgradeAvailable = false;
         this.managed = false;
-        if (type.id === BusinessType.LEMONADE.id){
+        if (type.id === BusinessType.LEMONADE.id) {
+            this.income = 1;
+            this.baseIncome = 1;
             this.active = true;
             this.level = 1;
         }
+
+        Business.instances[type.id] = this;
         Cash.getInstance().addCashUpdateListener(this);
+        this.renderUI();
+    }
+
+    public static getInstance(id : number) : Business | null {
+        if (Business.instances[id]) {
+            return Business.instances[id];
+        }
+        return null;
     }
 
     public run() {
-        if (!this.running){
+        if (!this.active) {
+            return;
+        }
+
+        if (!this.running) {
             this.running = true;
             this.startedAt = Date.now();
             Main.getInstance().addRunningBusiness(this);
@@ -63,40 +84,46 @@ export class Business implements CashUpdateListener {
         Cash.getInstance().increment(this.income);
         this.running = false;
         this.startedAt = -1;
-        Main.getInstance().removeRunningBusiness(this);
 
-        if (this.managed){
+        if (this.managed) {
             this.run();
         }
     }
 
     public nextTick() {
-        if (!this.running){
-            return;
-        }
-        if (Date.now() - this.startedAt >= this.milliSecondsPerRun){
+        this.updateProgressBarUI();
+        if (!this.running) {
+            Main.getInstance().removeRunningBusiness(this);
+        } else if (Date.now() - this.startedAt >= this.milliSecondsPerRun) {
             this.endRun();
         }
-        this.updateProgressBar();
     }
 
     public managerHired() {
         this.managed = true;
-        if (!this.running){
+        if (!this.running && this.active) {
             this.run();
         }
     }
 
     public cashUpdated(balance : number) {
-        if (balance >= this.cost){
-            if (!this.upgradeAvailable){
+        let cssClass = "button.btn-secondary";
+
+        if (balance >= this.cost) {
+            if (!this.upgradeAvailable) {
                 this.upgradeAvailable = true;
-                this.updateUpgradeButton();
+                if (!this.active) {
+                    cssClass = "div.disabled-business";
+                }
+                this.toggleUpgradeButtonUI(cssClass);
             }
         } else {
-            if (this.upgradeAvailable){
+            if (this.upgradeAvailable) {
                 this.upgradeAvailable = false;
-                this.updateUpgradeButton();
+                if (!this.active) {
+                    cssClass = "div.disabled-business";
+                }
+                this.toggleUpgradeButtonUI(cssClass);
             }
         }
     }
@@ -105,24 +132,134 @@ export class Business implements CashUpdateListener {
         let costOfIncrement : number = this.cost;
         this.incrementCost();
         this.incrementLevel();
+
+        if (!this.active) {
+            this.active = true;
+            this.renderUI();
+        }
+
+        this.upgradeUpdateUI();
+
         let cash : Cash = Cash.getInstance();
         cash.decrement(costOfIncrement);
     }
 
     incrementCost() {
-        this.cost = (((100 + this.costIncrementFactor) * this.cost) / 100|0);
+        let cost = this.cost;
+        cost = ((100 + this.costIncrementFactor) * cost) / 100;
+        cost = <number><unknown>cost.toFixed(2);
+        if (cost > 20) {
+            cost = Math.round(cost);
+        }
+        this.cost = cost;
     }
 
     incrementLevel() {
         this.level += 1;
-        if (this.level % 25 === 0){
+
+        // double speed every 25 levels
+        if (this.level % 25 === 0) {
             this.milliSecondsPerRun = this.milliSecondsPerRun / 2;
+        }
+
+        // for every level up, increase income by base amount
+        if (this.level > 1) {
+            this.income += this.baseIncome;
         }
     }
 
-    updateUpgradeButton() {
+    msToTimeFormat(ms : number) {
+        let seconds = Math.floor((ms / 1000) % 60);
+        let minutes = Math.floor((ms / 1000 / 60) % 60);
+        let hours = Math.floor((ms  / 1000 / 3600 ) % 24)
+
+        let formatted = [
+            hours.toString().padStart(2, '0'),
+            minutes.toString().padStart(2, '0'),
+            seconds.toString().padStart(2, '0')
+        ].join(':');
+
+        return formatted;
     }
 
-    updateProgressBar() {
+    upgradeUpdateUI() {
+        let el = document.getElementById("business-"+this.type.id);
+        el.querySelector("button.btn-secondary").innerHTML = '$'+this.cost;
+        el.querySelector("span.business-level").innerHTML = 'Level: '+this.level;
+        el.querySelector("span.business-income").innerHTML = 'Income: $'+this.income;
+    }
+
+    toggleUpgradeButtonUI(cssClass : string) {
+        let el = document.getElementById("business-"+this.type.id).querySelector(cssClass);
+        if (!this.upgradeAvailable && el.classList.contains('available')) {
+            el.classList.remove('available');
+            el.removeAttribute('onclick');
+        } else if (this.upgradeAvailable && !el.classList.contains('available')) {
+            el.classList.add('available');
+            el.setAttribute('onclick', 'EntryPoint.Main.upgradeBusiness('+this.type.id+')');
+        }
+    }
+
+    updateProgressBarUI() {
+        let el = document.getElementById("business-"+this.type.id);
+        let progressdiv = el.querySelector("div.progress");
+        let bar = progressdiv.querySelector("div.progress-bar");
+
+        if (this.running === false) {
+            bar.setAttribute('style', 'width: '+0+'%;');
+            bar.setAttribute('aria-valuenow', ''+0);
+            el.querySelector("span.timer-text").innerHTML = '00:00:00';
+        } else {
+            let progress = (Date.now() - this.startedAt) * 100 / this.milliSecondsPerRun;
+            progress = progress > 100 ? 100 : progress;
+            bar.setAttribute('style', 'width: '+progress+'%;');
+            bar.setAttribute('aria-valuenow', ''+progress);
+
+            if (progress >= 100) {
+                el.querySelector("span.timer-text").innerHTML = '00:00:00';
+            } else {
+                let remainingTime = this.milliSecondsPerRun - (Date.now() - this.startedAt);
+                el.querySelector("span.timer-text").innerHTML = this.msToTimeFormat(remainingTime);
+            }
+        }
+    }
+
+    renderUI() {
+        let html = '';
+        if (!this.active) {
+            html = `<div class="disabled-business">
+                            <span class="span-center-align">
+                                ${this.type.name}: $${this.cost}
+                            </span>
+                        </div>`
+        } else {
+            html = `<div class="business-container">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="business-icon" onclick="EntryPoint.Main.runBusiness(${this.type.id})">
+                                    <span class="business-name">${this.type.name}</span><br/>
+                                    <span class="business-level">Level: ${this.level} </span><br/>
+                                    <span class="business-income">Income: $${this.income}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="row progress-bar-row">
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row buy-button-row">
+                                    <div class="col-md-6"><button type="button" class="btn btn-secondary">Buy: $${this.cost}</button></div>
+                                    <div class="col-md-6"><div class="timer"><span class="timer-text">00:00:00</span></div></div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>`;
+        }
+
+        let elementId = 'business-'+this.type.id;
+        document.getElementById(elementId).innerHTML = html;
     }
 }

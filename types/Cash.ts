@@ -10,10 +10,11 @@ export class Cash {
         if(this.listeners===undefined) this.listeners = null;
         this.balance = b;
         this.listeners = <any>([]);
+        this.render();
     }
 
     public static getInstance() : Cash {
-        if (Cash.instance == null){
+        if (Cash.instance == null) {
             Cash.instance = new Cash(0);
         }
         return Cash.instance;
@@ -36,12 +37,17 @@ export class Cash {
     }
 
     updateBalance(by : number) {
-        this.balance += by;
+        this.balance = Math.round(this.balance + by);
+        this.render();
         for(let idx=0; idx < this.listeners.length; idx++) {
             let l = this.listeners[idx];
             {
                 l.cashUpdated(this.balance);
             }
         }
+    }
+
+    render() {
+        document.getElementById('cash').innerHTML = 'Cash: $' + this.balance;
     }
 }

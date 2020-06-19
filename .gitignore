@@ -351,3 +351,9 @@ MigrationBackup/
 
 # JS compiled from typescript
 public/generated/*
+
+# temp files to compile and bundle typescript
+public/js/bundle.js
+build-babel/*
+build-tsc/*
+dist/*

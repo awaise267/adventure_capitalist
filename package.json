@@ -4,9 +4,12 @@
   "description": "Replica of browser game adventure capitalist",
   "main": "server.js",
   "scripts": {
-    "watch:build": "tsc --watch ./types/*.ts --outDir ./public/generated",
-    "watch:server": "nodemon 'server.js' --watch './public'",
-    "start": "npm-run-all --parallel watch:build watch:server"
+    "run:tsc": "tsc",
+    "run:babel": "babel build-tsc --out-dir build-babel --source-maps",
+    "run:webpack": "webpack && rm -f ./public/js/bundle.js && cp dist/* public/js",
+    "build": "run-s run:tsc run:babel run:webpack",
+    "watch:server": "nodemon 'server.js' --watch '.'",
+    "start": "run-s run:tsc run:babel run:webpack watch:server"
   },
   "repository": {
     "type": "git",
@@ -23,6 +26,10 @@
   },
   "homepage": "https://github.com/awaise267/adventure_capitalist#readme",
   "dependencies": {
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "webpack": "^4.43.0"
+  },
+  "devDependencies": {
+    "webpack-cli": "^3.3.12"
   }
 }
