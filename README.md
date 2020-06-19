@@ -1,2 +1,2 @@
-# adventure_capitalist
+# Adventure Capitalist
 Replica of browser game adventure capitalist.

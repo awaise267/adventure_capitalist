@@ -1,0 +1,10 @@
+.main-div {
+    margin-top: 100px;
+    z-index:10;
+    border: 2px solid black;
+    background-color: #333;
+    min-width: 896px;
+    min-height: 672px; /* 4:3 ratio */
+    vertical-align: middle;
+    color: white;
+}

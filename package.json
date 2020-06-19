@@ -2,9 +2,11 @@
   "name": "adventure_capitalist",
   "version": "1.0.0",
   "description": "Replica of browser game adventure capitalist",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "watch:build": "tsc --watch ./types/*.ts --outDir ./public/generated",
+    "watch:server": "nodemon 'server.js' --watch './public'",
+    "start": "npm-run-all --parallel watch:build watch:server"
   },
   "repository": {
     "type": "git",
