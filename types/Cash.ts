@@ -29,11 +29,16 @@ export class Cash {
     }
 
     public addCashUpdateListener(l : CashUpdateListener) {
-        ((s, e) => { if(s.indexOf(e)==-1) { s.push(e); return true; } else { return false; } })(this.listeners, l);
+        if (this.listeners.indexOf(l) == -1) {
+            this.listeners.push(l);
+        }
     }
 
     public removeCashUpdateListener(l : CashUpdateListener) {
-        (a => { let index = a.indexOf(l); if(index>=0) { a.splice(index, 1); return true; } else { return false; }})(this.listeners);
+        let index = this.listeners.indexOf(l);
+        if (index >= 0) {
+            this.listeners.splice(index, 1);
+        }
     }
 
     updateBalance(by : number) {

@@ -31,32 +31,32 @@ export class Manager implements CashUpdateListener {
 
     public hire() {
         let cash : Cash = Cash.getInstance();
-
         if (cash.balance < this.cost) {
             return;
         }
+
         cash.removeCashUpdateListener(this);
         cash.decrement(this.cost);
         this.manages.managerHired();
         this.hired = true;
-        this.updateView();
+        this.updateUI();
     }
 
     public cashUpdated(balance : number) {
         if (balance >= this.cost) {
             if (!this.available) {
                 this.available = true;
-                this.updateView();
+                this.updateUI();
             }
         } else {
             if (this.available) {
                 this.available = false;
-                this.updateView();
+                this.updateUI();
             }
         }
     }
 
-    updateView() {
+    updateUI() {
         let el = document.getElementById(`manager-${this.manages.type.id}`);
         if (this.hired) {
             // remove hire manager option from UI

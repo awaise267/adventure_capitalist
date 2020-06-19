@@ -4,12 +4,13 @@
   "description": "Replica of browser game adventure capitalist",
   "main": "server.js",
   "scripts": {
+    "create:dirs": "mkdir -p public/js dist build-tsc build-babel",
     "run:tsc": "tsc",
     "run:babel": "babel build-tsc --out-dir build-babel --source-maps",
     "run:webpack": "webpack && rm -f ./public/js/bundle.js && cp dist/* public/js/",
-    "build": "run-s run:tsc run:babel run:webpack",
+    "build": "run-s create:dirs run:tsc run:babel run:webpack",
     "watch:server": "nodemon 'server.js' --watch '.'",
-    "start": "run-s run:tsc run:babel run:webpack watch:server"
+    "start": "run-s create:dirs run:tsc run:babel run:webpack watch:server"
   },
   "repository": {
     "type": "git",

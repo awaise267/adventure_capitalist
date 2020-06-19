@@ -9,7 +9,7 @@ export class Main {
     refreshInterval : number;
     runningBusinesses : Array<Business>;
     started : boolean;
-    intervalId : number; //identifier for setInterval timer
+    intervalId : number; //identifier for setInterval timer if we want to clear it
 
     constructor(refreshInterval? : number) {
         if (refreshInterval === undefined) {
@@ -29,26 +29,35 @@ export class Main {
         return Main.instance;
     }
 
-    public addRunningBusiness(b : Business) {
-        ((s, e) => { if(s.indexOf(e)==-1) { s.push(e); return true; } else { return false; } })(this.runningBusinesses, b);
-    }
-
-    public removeRunningBusiness(b : Business) {
-        (a => { let index = a.indexOf(b); if(index>=0) { a.splice(index, 1); return true; } else { return false; }})(this.runningBusinesses);
-    }
-
-    public start() {
+    // update UI every 'refreshInterval' millisecs
+    start() {
         if (!this.started) {
             this.intervalId = window.setInterval(
                 () => { this.runningBusinesses.forEach(b => b.nextTick()) },
                 this.refreshInterval
             );
+            this.started = true;
         }
     }
 
-    public stop() {
+    // update UI every 'refreshInterval' millisecs
+    stop() {
         if (this.started) {
             window.clearInterval(this.intervalId);
+            this.started = false;
+        }
+    }
+
+    public addRunningBusiness(b : Business) {
+        if (this.runningBusinesses.indexOf(b) == -1) {
+            this.runningBusinesses.push(b);
+        }
+    }
+
+    public removeRunningBusiness(b : Business) {
+        let index = this.runningBusinesses.indexOf(b);
+        if (index >= 0) {
+            this.runningBusinesses.splice(index, 1);
         }
     }
 
@@ -66,17 +75,13 @@ export class Main {
 
     // start new instance of game
     public static newInstance() {
-        let main = Main.getInstance();
         Main.startBusinesses();
         Main.startManagers();
-        main.start();
-    }
-
-    public static restoreInstance() {
-        // TODO: restore instance from local storage
+        Main.getInstance().start();
     }
 
     static startBusinesses() {
+        // we'll increase upgrade cost by 7% for first 4 business and by 14% for the other 4.
         new Business(BusinessType.LEMONADE, 1, 4, 7);
         new Business(BusinessType.NEWSPAPER, 3, 60, 7);
         new Business(BusinessType.CAR, 6, 720, 7); //car wash

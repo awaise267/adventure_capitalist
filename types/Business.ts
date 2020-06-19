@@ -68,6 +68,7 @@ export class Business implements CashUpdateListener {
         return null;
     }
 
+    // run a business to earn income
     public run() {
         if (!this.active) {
             return;
@@ -80,6 +81,8 @@ export class Business implements CashUpdateListener {
         }
     }
 
+    // stop running a business after income is earned
+    // if manager is hired, this restarts a run
     public endRun() {
         Cash.getInstance().increment(this.income);
         this.running = false;
@@ -90,9 +93,11 @@ export class Business implements CashUpdateListener {
         }
     }
 
+    // update UI every Main.refreshInterval seconds
     public nextTick() {
         this.updateProgressBarUI();
         if (!this.running) {
+            // do not remove within endRun() to wait for another tick before clearing a full progress bar
             Main.getInstance().removeRunningBusiness(this);
         } else if (Date.now() - this.startedAt >= this.milliSecondsPerRun) {
             this.endRun();
@@ -101,11 +106,16 @@ export class Business implements CashUpdateListener {
 
     public managerHired() {
         this.managed = true;
+
+        // if manager is hired before a business is unlocked, we do nothing
+        // business has to be unlocked and started at-least once
+        // this is also to the original game's behaviour
         if (!this.running && this.active) {
             this.run();
         }
     }
 
+    // CashUpdateListener's event handler
     public cashUpdated(balance : number) {
         let cssClass = "button.btn-secondary";
 
@@ -128,6 +138,7 @@ export class Business implements CashUpdateListener {
         }
     }
 
+    // called from UI onclick event
     public upgrade() {
         let costOfIncrement : number = this.cost;
         this.incrementCost();
@@ -144,6 +155,7 @@ export class Business implements CashUpdateListener {
         cash.decrement(costOfIncrement);
     }
 
+    // Internal function
     incrementCost() {
         let cost = this.cost;
         cost = ((100 + this.costIncrementFactor) * cost) / 100;
@@ -154,6 +166,7 @@ export class Business implements CashUpdateListener {
         this.cost = cost;
     }
 
+    // Internal function
     incrementLevel() {
         this.level += 1;
 
@@ -168,6 +181,7 @@ export class Business implements CashUpdateListener {
         }
     }
 
+    // Internal util function (source: stackoverflow)
     msToTimeFormat(ms : number) {
         let seconds = Math.floor((ms / 1000) % 60);
         let minutes = Math.floor((ms / 1000 / 60) % 60);
@@ -182,38 +196,43 @@ export class Business implements CashUpdateListener {
         return formatted;
     }
 
+    /*  ------------------------------------------------------------------------------
+        Hacky UI code below that manipulates the DOM manually. In a typical
+        react app this should automatically be handled by React on updating the state
+        ------------------------------------------------------------------------------ */
+
     upgradeUpdateUI() {
-        let el = document.getElementById("business-"+this.type.id);
-        el.querySelector("button.btn-secondary").innerHTML = '$'+this.cost;
-        el.querySelector("span.business-level").innerHTML = 'Level: '+this.level;
-        el.querySelector("span.business-income").innerHTML = 'Income: $'+this.income;
+        let el = document.getElementById("business-" + this.type.id);
+        el.querySelector("button.btn-secondary").innerHTML = 'Upgrade: $' + this.cost;
+        el.querySelector("span.business-level").innerHTML = 'Level: ' + this.level;
+        el.querySelector("span.business-income").innerHTML = 'Income: $' + this.income;
     }
 
     toggleUpgradeButtonUI(cssClass : string) {
-        let el = document.getElementById("business-"+this.type.id).querySelector(cssClass);
+        let el = document.getElementById("business-" + this.type.id).querySelector(cssClass);
         if (!this.upgradeAvailable && el.classList.contains('available')) {
             el.classList.remove('available');
             el.removeAttribute('onclick');
         } else if (this.upgradeAvailable && !el.classList.contains('available')) {
             el.classList.add('available');
-            el.setAttribute('onclick', 'EntryPoint.Main.upgradeBusiness('+this.type.id+')');
+            el.setAttribute('onclick', 'EntryPoint.Main.upgradeBusiness(' + this.type.id + ')');
         }
     }
 
     updateProgressBarUI() {
-        let el = document.getElementById("business-"+this.type.id);
+        let el = document.getElementById("business-" + this.type.id);
         let progressdiv = el.querySelector("div.progress");
         let bar = progressdiv.querySelector("div.progress-bar");
 
         if (this.running === false) {
-            bar.setAttribute('style', 'width: '+0+'%;');
-            bar.setAttribute('aria-valuenow', ''+0);
+            bar.setAttribute('style', 'width: ' + 0 + '%;');
+            bar.setAttribute('aria-valuenow', '' + 0);
             el.querySelector("span.timer-text").innerHTML = '00:00:00';
         } else {
             let progress = (Date.now() - this.startedAt) * 100 / this.milliSecondsPerRun;
             progress = progress > 100 ? 100 : progress;
-            bar.setAttribute('style', 'width: '+progress+'%;');
-            bar.setAttribute('aria-valuenow', ''+progress);
+            bar.setAttribute('style', 'width: ' + progress + '%;');
+            bar.setAttribute('aria-valuenow', '' + progress);
 
             if (progress >= 100) {
                 el.querySelector("span.timer-text").innerHTML = '00:00:00';
@@ -250,7 +269,7 @@ export class Business implements CashUpdateListener {
                                     </div>
                                 </div>
                                 <div class="row buy-button-row">
-                                    <div class="col-md-6"><button type="button" class="btn btn-secondary">Buy: $${this.cost}</button></div>
+                                    <div class="col-md-6"><button type="button" class="btn btn-secondary">Upgrade: $${this.cost}</button></div>
                                     <div class="col-md-6"><div class="timer"><span class="timer-text">00:00:00</span></div></div>
                                 </div>
 
@@ -259,7 +278,7 @@ export class Business implements CashUpdateListener {
                     </div>`;
         }
 
-        let elementId = 'business-'+this.type.id;
+        let elementId = 'business-' + this.type.id;
         document.getElementById(elementId).innerHTML = html;
     }
 }

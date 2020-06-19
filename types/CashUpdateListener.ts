@@ -1,3 +1,3 @@
 export interface CashUpdateListener {
-    cashUpdated(balance : number);
+    cashUpdated(balance : number) : void;
 }
