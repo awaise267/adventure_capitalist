@@ -12,7 +12,7 @@ Hiring managers to automatically run business
 Store and read state from localstorage/indexeddb to persist across sessions.
 
 # Running locally
-This proijects has a dependency on nodejs. All other dependencies are installed by checking out the code and running `npm install`.
+This project has a dependency on nodejs. Remaining dependencies are installed by checking out the code and running `npm install`.
 To start the server, run `npm start`. Runs on port 3000 by default
 
 # Code Structure
