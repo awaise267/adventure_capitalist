@@ -28,3 +28,10 @@ The logic layer is divided into the following parts:
 
 `Manager` class - Instances of this class are initialized after the `Business` class. Adds a `CashUpdateListener` to allow hiring a manager if the balance exceeds the hiring cost.
 
+# Trade offs made/nice-to-have given time
+1. Using React to update the DOM on state updates would be much more cleaner.
+
+2. Session persistence was not implemented because while serializing the class state into JSON is easy, storing to indexeddb is difficult if state needs to be saved just before exit as indexeddb is async.
+It's possible to push state to server on every change but that's very write-heavy. A websocket connection would reduce the load of creating multiple http requests but the writes on the server would also benefit from something like an in-memory database for writes and periodic back-ups to disk.
+
+3. A single `setInterval` timer required more code but is more efficient than each business maintaining its own timer as multiple competing async timer callbacks would block the thread from responding to user actions.
