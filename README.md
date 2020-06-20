@@ -19,7 +19,8 @@ To start the server, run `npm start`. Runs on port 3000 by default
 This implementation focuses on the logic layer written using TypeScript. State changes in the classes trigger UI updates which would, in a perfect implementation, have been handled by React. This is my first attempt at TypeScript and React has a steeper learning curve so we will put aside creating a React application for the future. For the sake of simplicity, UI updates are handled by manually updating the DOM.
 
 The logic layer is divided into the following parts:
-`Main` class - The entry point to the application. Webpack exposes this to index.html where we call `Main.newInstance()`. This class runs a timer that updates the UI 4 times in a second.
+
+`Main` class - The entry point to the application. webpack exposes this to `index.html` where we call `Main.newInstance()`. This class runs a timer that updates the UI 4 times in a second.
 
 `Cash` class - This class maintains the user's cash balance in a singleton object. Other classes can register event listeners for cash updates (purchases and income) trigger events using the `CashUpdateListener` interface.
 
